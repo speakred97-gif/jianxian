@@ -1,0 +1,1179 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI 产品经理简历生成器</title>
+  <style>
+    :root {
+      --primary: #1F3864;
+      --blue: #2E75B6;
+      --purple: #7C3AED;
+      --bg: #F8FAFC;
+      --card: #FFFFFF;
+      --border: #E2E8F0;
+      --text: #1A202C;
+      --muted: #718096;
+      --green: #38A169;
+      --red: #E53E3E;
+      --orange: #DD6B20;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+    .hidden { display: none !important; }
+
+    /* ── Header ── */
+    .header {
+      background: var(--primary);
+      color: #fff;
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 200;
+      box-shadow: 0 2px 8px rgba(0,0,0,.25);
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .header h1 { font-size: 1.05rem; font-weight: 700; }
+    .header-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .header-status { font-size: .78rem; opacity: .85; }
+    .skill-select-wrap { display: flex; align-items: center; gap: 6px; }
+    .skill-select-wrap label { font-size: .78rem; opacity: .85; white-space: nowrap; }
+    .skill-select-wrap select {
+      font-size: .78rem; padding: 4px 8px; border-radius: 5px;
+      border: 1px solid rgba(255,255,255,.4); background: rgba(255,255,255,.15);
+      color: #fff; cursor: pointer; max-width: 240px;
+    }
+    .skill-select-wrap select option { background: var(--primary); color: #fff; }
+
+    /* ── Buttons ── */
+    .btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: .85rem;
+      font-weight: 500;
+      transition: filter .15s;
+    }
+    .btn:hover { filter: brightness(.9); }
+    .btn:disabled { opacity: .45; cursor: not-allowed; filter: none; }
+    .btn-ghost { background: rgba(255,255,255,.15); color: #fff; border: 1px solid rgba(255,255,255,.3); }
+    .btn-primary { background: var(--blue); color: #fff; }
+    .btn-green { background: var(--green); color: #fff; }
+    .btn-purple { background: var(--purple); color: #fff; }
+    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+    .btn-lg { padding: 13px 36px; font-size: 1rem; border-radius: 8px; }
+    .btn-sm { padding: 5px 10px; font-size: .78rem; }
+    .btn-danger-ghost { background: transparent; border: 1px solid #FCA5A5; color: var(--red); padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: .75rem; }
+    .btn-danger-ghost:hover { background: #FEF2F2; }
+
+    /* ── Modal ── */
+    .overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.55);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 900;
+    }
+    .modal {
+      background: #fff;
+      border-radius: 14px;
+      padding: 32px;
+      max-width: 480px;
+      width: 94%;
+      box-shadow: 0 24px 60px rgba(0,0,0,.3);
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .modal h2 { font-size: 1.2rem; color: var(--primary); margin-bottom: 8px; }
+    .modal p  { font-size: .85rem; color: var(--muted); line-height: 1.7; margin-bottom: 12px; }
+    .modal p a { color: var(--blue); }
+    .modal-actions { display: flex; gap: 10px; margin-top: 18px; }
+    .eye-btn {
+      position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; cursor: pointer; color: var(--muted);
+      font-size: 1rem; padding: 2px 4px;
+    }
+
+    /* ── Layout ── */
+    .wrap { max-width: 900px; margin: 0 auto; padding: 24px 16px; }
+    .wrap-top { max-width: 900px; margin: 0 auto; padding: 8px 16px 0; }
+
+    /* ── Card ── */
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 22px; margin-bottom: 16px; }
+    .card-title {
+      font-size: .95rem; font-weight: 700; color: var(--primary);
+      margin-bottom: 16px; padding-bottom: 10px;
+      border-bottom: 2px solid var(--blue);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+
+    /* ── Form ── */
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    @media(max-width:600px){ .grid2 { grid-template-columns: 1fr; } }
+    .full { grid-column: 1/-1; }
+    .fg { display: flex; flex-direction: column; gap: 5px; }
+    label { font-size: .82rem; font-weight: 600; color: var(--text); }
+    label .req { color: var(--red); margin-left: 2px; }
+    label .opt { color: var(--muted); font-weight: 400; font-size: .75rem; margin-left: 4px; }
+    input[type=text], input[type=password], input[type=month], textarea, select {
+      width: 100%; padding: 9px 11px;
+      border: 1px solid var(--border); border-radius: 6px;
+      font-size: .85rem; font-family: inherit; color: var(--text);
+      background: #fff; transition: border-color .2s;
+    }
+    input:focus, textarea:focus, select:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(46,117,182,.1); }
+    textarea { resize: vertical; min-height: 90px; }
+    .rel { position: relative; }
+    .date-range { display: flex; align-items: center; gap: 8px; }
+    .date-range span { color: var(--muted); font-size: .85rem; flex-shrink: 0; }
+    .date-range input { flex: 1; }
+
+    /* ── Entry items (work / education) ── */
+    .entry-item {
+      border: 1px solid var(--border);
+      border-radius: 8px; padding: 16px;
+      background: var(--bg); margin-bottom: 12px;
+    }
+    .entry-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .entry-num { font-size: .8rem; font-weight: 700; color: var(--blue); }
+
+    /* ── Projects ── */
+    .proj-item {
+      border: 1px solid var(--border);
+      border-radius: 8px; padding: 14px;
+      background: var(--bg); margin-bottom: 10px;
+    }
+    .proj-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+    .proj-header input { flex: 1; font-weight: 600; }
+    .drop-zone {
+      border: 2px dashed var(--border); border-radius: 6px;
+      padding: 14px; text-align: center; cursor: pointer;
+      transition: all .2s; margin-bottom: 8px; font-size: .8rem; color: var(--muted);
+    }
+    .drop-zone:hover, .drop-zone.drag-over { border-color: var(--blue); background: rgba(46,117,182,.04); color: var(--blue); }
+    .file-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: #EFF6FF; border: 1px solid #BFDBFE; color: #1E40AF;
+      padding: 4px 10px; border-radius: 20px; font-size: .78rem; margin-bottom: 8px;
+    }
+    .file-badge button { background: none; border: none; cursor: pointer; color: var(--muted); font-size: .9rem; line-height: 1; }
+
+    /* ── Project-Work link checkboxes ── */
+    .link-section { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+    .link-section-title { font-size: .8rem; font-weight: 600; color: var(--muted); margin-bottom: 8px; }
+    .proj-checks { display: flex; flex-wrap: wrap; gap: 10px; }
+    .proj-check-label { display: flex; align-items: center; gap: 5px; font-size: .82rem; cursor: pointer; }
+    .proj-check-label input[type=checkbox] { width: auto; cursor: pointer; }
+
+    /* ── Output ── */
+    .out-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-top: 24px; }
+
+    .progress-bars { margin-bottom: 16px; }
+    .progress-step { display: flex; align-items: center; gap: 10px; font-size: .82rem; margin-bottom: 8px; }
+    .step-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .step-dot.pending { background: var(--border); }
+    .step-dot.running { background: var(--blue); animation: pulse 1.2s infinite; }
+    .step-dot.done { background: var(--green); }
+    .step-dot.err { background: var(--red); }
+    @keyframes pulse { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.4);opacity:.6} }
+
+    .tabs { display: flex; border-bottom: 2px solid var(--border); margin-bottom: 14px; overflow-x: auto; }
+    .tab {
+      padding: 8px 18px; border: none; background: none;
+      cursor: pointer; font-size: .85rem; color: var(--muted);
+      border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all .15s;
+      white-space: nowrap;
+    }
+    .tab.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 600; }
+    .out-box { min-height: 160px; }
+    .out-actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+
+    /* ── Markdown styles ── */
+    .md h1 { font-size: 1.5rem; color: var(--primary); margin: 12px 0 6px; }
+    .md h2 { font-size: 1.1rem; color: var(--primary); margin: 14px 0 6px; padding-bottom: 5px; border-bottom: 1px solid var(--border); }
+    .md h3 { font-size: .95rem; color: var(--blue); margin: 10px 0 4px; }
+    .md p  { font-size: .875rem; margin: 6px 0; }
+    .md ul { margin: 4px 0 4px 20px; }
+    .md li { font-size: .875rem; margin: 3px 0; }
+    .md strong { color: var(--primary); }
+    .md table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+    .md td,.md th { padding: 7px 11px; border: 1px solid var(--border); font-size: .82rem; }
+    .md th { background: var(--bg); font-weight: 600; }
+    .md code { background: #F1F5F9; padding: 1px 5px; border-radius: 3px; font-size: .82rem; }
+    .md pre  { background: #F1F5F9; padding: 12px; border-radius: 6px; overflow-x: auto; font-size: .8rem; }
+    .md blockquote { border-left: 3px solid var(--blue); padding-left: 12px; color: var(--muted); margin: 6px 0; font-style: italic; }
+    .md hr { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
+    .cursor::after { content:'▋'; color: var(--blue); animation: blink .7s step-end infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+    /* ── Skill status ── */
+    .skill-status { font-size: .75rem; padding: 4px 0; }
+    .skill-status.ok { color: var(--green); }
+    .skill-status.err { color: var(--red); }
+    .skill-status.loading { color: var(--orange); }
+
+    /* ── Print ── */
+    @media print {
+      .header,.card:not(.out-card),.gen-wrap,.tabs,.out-actions,.progress-bars { display: none !important; }
+      .out-card { border: none; padding: 0; box-shadow: none; }
+      body { background: white; }
+    }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
+      background: #1A202C; color: #fff; padding: 10px 22px;
+      border-radius: 8px; font-size: .85rem; z-index: 9999;
+      animation: slideUp .25s ease;
+    }
+    @keyframes slideUp { from{opacity:0;transform:translateX(-50%) translateY(10px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
+  </style>
+</head>
+<body>
+
+<!-- ══ API Key Modal ══ -->
+<div id="key-modal" class="overlay hidden">
+  <div class="modal">
+    <h2>🔑 设置 Anthropic API Key</h2>
+    <p>
+      本应用在您的浏览器中<strong>直接调用 Anthropic API</strong>，无需后端服务器。<br>
+      API Key 仅保存在本地 localStorage，<strong>不会上传到任何服务器</strong>。
+    </p>
+    <p>
+      没有 API Key？前往
+      <a href="https://console.anthropic.com/account/keys" target="_blank">console.anthropic.com</a>
+      获取。
+    </p>
+    <div class="fg">
+      <label for="key-inp">API Key</label>
+      <div class="rel">
+        <input type="password" id="key-inp" placeholder="sk-ant-api03-…" />
+        <button class="eye-btn" onclick="toggleEye()">👁</button>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" style="flex:1" onclick="saveKey()">保存并继续</button>
+      <button class="btn btn-outline" id="skip-btn" onclick="closeKeyModal()">跳过</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ Header ══ -->
+<div class="header">
+  <h1>🎯 AI 产品经理简历生成器</h1>
+  <div class="header-right">
+    <div class="skill-select-wrap">
+      <label for="skill-sel">Skill：</label>
+      <select id="skill-sel" onchange="loadSelectedSkill()">
+        <option value="">加载中…</option>
+      </select>
+    </div>
+    <span class="header-status" id="key-status"></span>
+    <button class="btn btn-ghost" onclick="openKeyModal(true)">API Key</button>
+  </div>
+</div>
+
+<!-- ══ Main ══ -->
+<div class="wrap">
+
+  <div id="skill-status-bar" class="skill-status loading">⏳ 正在加载 Skill 文件列表…</div>
+
+  <!-- 基本信息 -->
+  <div class="card" style="margin-top:12px">
+    <div class="card-title">📋 个人基本信息</div>
+    <div class="grid2">
+      <div class="fg">
+        <label for="name">姓名 <span class="req">*</span></label>
+        <input type="text" id="name" placeholder="可填化名" />
+      </div>
+      <div class="fg">
+        <label for="pos">目标职位 <span class="opt">默认：AI 产品经理</span></label>
+        <input type="text" id="pos" placeholder="AI 产品经理" />
+      </div>
+      <div class="fg">
+        <label for="phone">手机 <span class="req">*</span></label>
+        <input type="text" id="phone" placeholder="138****8888" />
+      </div>
+      <div class="fg">
+        <label for="email">邮箱 <span class="opt">选填</span></label>
+        <input type="text" id="email" placeholder="example@qq.com" />
+      </div>
+      <div class="fg">
+        <label for="wechat">微信号 <span class="opt">选填</span></label>
+        <input type="text" id="wechat" placeholder="微信号" />
+      </div>
+      <div class="fg">
+        <label for="birth">出生年月 <span class="opt">选填</span></label>
+        <input type="month" id="birth" />
+      </div>
+      <div class="fg">
+        <label for="workstart">参加工作时间 <span class="opt">选填</span></label>
+        <input type="month" id="workstart" />
+      </div>
+      <div class="fg">
+        <label for="extra">补充信息 <span class="opt">选填</span></label>
+        <input type="text" id="extra" placeholder="PMP证书、Python、SCI论文等" />
+      </div>
+    </div>
+  </div>
+
+  <!-- 教育经历 -->
+  <div class="card">
+    <div class="card-title">
+      🎓 教育经历
+      <button class="btn btn-sm btn-outline" onclick="addEdu()">＋ 添加</button>
+    </div>
+    <div id="edu-list"></div>
+  </div>
+
+  <!-- 工作经历 -->
+  <div class="card">
+    <div class="card-title">
+      🏢 工作经历 <span class="req">*</span>
+      <button class="btn btn-sm btn-outline" onclick="addWork()">＋ 添加</button>
+    </div>
+    <div id="work-list"></div>
+    <p style="font-size:.78rem;color:var(--muted);margin-top:8px">
+      💡 工作描述无需手动填写，将由 AI 根据关联的项目文档自动生成。
+    </p>
+  </div>
+
+  <!-- 项目文档 -->
+  <div class="card">
+    <div class="card-title">
+      📂 项目文档 <span class="req">*</span>
+      <button class="btn btn-sm btn-outline" onclick="addProj()">＋ 添加项目</button>
+    </div>
+    <p style="font-size:.83rem;color:var(--muted);margin-bottom:14px;">
+      每个项目可上传 .txt / .md / .docx / .pdf 文件，或直接粘贴内容。填写项目时间段后可在工作经历中关联该项目。
+    </p>
+    <div id="proj-list"></div>
+  </div>
+
+  <!-- 生成按钮 -->
+  <div style="text-align:center;padding:8px 0 4px">
+    <button class="btn btn-primary btn-lg" id="gen-btn" onclick="generate()">✨ 生成简历 + 项目评估</button>
+    <p style="font-size:.78rem;color:var(--muted);margin-top:8px">分两步生成：①项目评估与润色 ②简历生成，共约 60–90 秒</p>
+  </div>
+
+  <!-- 输出区 -->
+  <div id="output-section" class="hidden">
+    <div class="out-card">
+      <div class="progress-bars">
+        <div class="progress-step">
+          <div class="step-dot pending" id="step1-dot"></div>
+          <span id="step1-txt" style="color:var(--muted)">第一步：项目文档评估与 AI 润色</span>
+        </div>
+        <div class="progress-step">
+          <div class="step-dot pending" id="step2-dot"></div>
+          <span id="step2-txt" style="color:var(--muted)">第二步：简历生成</span>
+        </div>
+      </div>
+      <div class="tabs">
+        <button class="tab active" id="tab-resume" onclick="switchTab('resume')">📄 简历预览</button>
+        <button class="tab" id="tab-eval" onclick="switchTab('eval')">📊 项目评估报告</button>
+        <button class="tab" id="tab-proj" onclick="switchTab('proj')">✨ 润色后项目文档</button>
+        <button class="tab" id="tab-raw" onclick="switchTab('raw')">原文 Markdown</button>
+      </div>
+      <div class="out-box">
+        <div id="pane-resume" class="md"></div>
+        <div id="pane-eval" class="md hidden"></div>
+        <div id="pane-proj" class="md hidden"></div>
+        <pre id="pane-raw" class="hidden" style="white-space:pre-wrap;font-size:.8rem;font-family:monospace;"></pre>
+      </div>
+      <div class="out-actions">
+        <button class="btn btn-green" id="btn-dl-resume" onclick="downloadResumeWord()" disabled>⬇️ 简历 Word</button>
+        <button class="btn btn-purple" id="btn-dl-proj" onclick="downloadProjWord()" disabled>⬇️ 项目文档 Word</button>
+        <button class="btn btn-outline" onclick="copyMd()">📋 复制简历 MD</button>
+        <button class="btn btn-outline" onclick="window.print()">🖨️ 打印 / PDF</button>
+        <button class="btn btn-outline" onclick="clearOut()" style="margin-left:auto">🗑️ 清除</button>
+      </div>
+      <div style="font-size:.72rem;color:var(--muted);margin-top:8px;text-align:right" id="token-info"></div>
+    </div>
+  </div>
+
+</div><!-- /wrap -->
+
+<!-- ══ Scripts ══ -->
+<script src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js"></script>
+<script>
+// ─────────────────────────────────────────────
+// Constants & State
+// ─────────────────────────────────────────────
+const API_URL   = 'https://api.anthropic.com/v1/messages';
+const MODEL     = 'claude-sonnet-4-6';
+const GH_OWNER  = 'speakred97-gif';
+const GH_REPO   = 'jianxian';
+const GH_BRANCH = 'main';
+
+let skillContent = '';
+let works    = [];  // [{id, company, industry, dept, title, start, end, projIds}]
+let edus     = [];  // [{id, school, type, degree, major, start, end, exp}]
+let projects = [];  // [{id, name, startDate, endDate, content, filename}]
+let workId = 0, eduId = 0, projId = 0;
+let generating = false;
+let outputResume = '', outputEval = '', outputProj = '';
+
+// ─────────────────────────────────────────────
+// Init
+// ─────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  const k = ls('apikey');
+  if (!k) openKeyModal(false);
+  else setKeyStatus(true);
+  loadSkillList();
+  addEdu();
+  addWork();
+  addProj();
+});
+
+// ─────────────────────────────────────────────
+// localStorage
+// ─────────────────────────────────────────────
+function ls(k, v) {
+  if (v === undefined) return localStorage.getItem('anth_' + k);
+  if (v === null) localStorage.removeItem('anth_' + k);
+  else localStorage.setItem('anth_' + k, v);
+}
+
+// ─────────────────────────────────────────────
+// API Key modal
+// ─────────────────────────────────────────────
+function openKeyModal(canSkip) {
+  document.getElementById('skip-btn').classList.toggle('hidden', !canSkip);
+  const k = ls('apikey');
+  if (k) document.getElementById('key-inp').value = k;
+  document.getElementById('key-modal').classList.remove('hidden');
+}
+function closeKeyModal() { document.getElementById('key-modal').classList.add('hidden'); }
+function toggleEye() {
+  const i = document.getElementById('key-inp');
+  i.type = i.type === 'password' ? 'text' : 'password';
+}
+function saveKey() {
+  const v = document.getElementById('key-inp').value.trim();
+  if (!v) { alert('请输入 API Key'); return; }
+  ls('apikey', v);
+  setKeyStatus(true);
+  closeKeyModal();
+}
+function setKeyStatus(ok) {
+  document.getElementById('key-status').textContent = ok ? '✅ Key 已设置' : '⚠️ 未设置';
+}
+
+// ─────────────────────────────────────────────
+// Skill loader — GitHub API
+// ─────────────────────────────────────────────
+async function loadSkillList() {
+  const bar = document.getElementById('skill-status-bar');
+  const sel = document.getElementById('skill-sel');
+  try {
+    const res = await fetch(
+      `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/?ref=${GH_BRANCH}`
+    );
+    if (!res.ok) throw new Error('GitHub API ' + res.status);
+    const files = await res.json();
+    const mds = files.filter(f => f.type === 'file' && f.name.endsWith('.md'));
+    if (!mds.length) throw new Error('仓库中无 .md 文件');
+    sel.innerHTML = mds.map(f =>
+      `<option value="${esc(f.download_url)}">${esc(f.name)}</option>`
+    ).join('');
+    await loadSelectedSkill();
+  } catch (e) {
+    bar.textContent = '⚠️ Skill 列表加载失败：' + e.message + '（使用内置默认 Skill）';
+    bar.className = 'skill-status err';
+    sel.innerHTML = '<option value="">内置默认 Skill</option>';
+    skillContent = DEFAULT_SKILL;
+    bar.textContent = '⚠️ 使用内置默认 Skill（无法访问 GitHub）';
+  }
+}
+
+async function loadSelectedSkill() {
+  const bar = document.getElementById('skill-status-bar');
+  const url = document.getElementById('skill-sel').value;
+  if (!url) { skillContent = DEFAULT_SKILL; return; }
+  bar.textContent = '⏳ 正在加载 Skill…';
+  bar.className = 'skill-status loading';
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    skillContent = await res.text();
+    bar.textContent = '✅ Skill 已加载：' + document.getElementById('skill-sel').selectedOptions[0]?.text;
+    bar.className = 'skill-status ok';
+  } catch (e) {
+    bar.textContent = '⚠️ Skill 加载失败：' + e.message + '（使用内置默认）';
+    bar.className = 'skill-status err';
+    skillContent = DEFAULT_SKILL;
+  }
+}
+
+// ─────────────────────────────────────────────
+// Education
+// ─────────────────────────────────────────────
+function addEdu() {
+  edus.push({ id: ++eduId, school:'', type:'全日制', degree:'本科', major:'', start:'', end:'', exp:'' });
+  renderEdus();
+}
+function removeEdu(id) { edus = edus.filter(e => e.id !== id); renderEdus(); }
+function setEdu(id, field, val) { const e = edus.find(e => e.id === id); if (e) e[field] = val; }
+
+function renderEdus() {
+  const el = document.getElementById('edu-list');
+  if (!edus.length) {
+    el.innerHTML = '<p style="font-size:.83rem;color:var(--muted)">暂无教育经历，点击「添加」。</p>';
+    return;
+  }
+  el.innerHTML = '';
+  edus.forEach((e, i) => {
+    const d = document.createElement('div');
+    d.className = 'entry-item';
+    d.innerHTML = `
+      <div class="entry-header">
+        <span class="entry-num">教育经历 ${i+1}</span>
+        <button class="btn-danger-ghost" onclick="removeEdu(${e.id})">删除</button>
+      </div>
+      <div class="grid2">
+        <div class="fg">
+          <label>学校名称</label>
+          <input type="text" value="${esc(e.school)}" placeholder="如：哈尔滨工业大学"
+            oninput="setEdu(${e.id},'school',this.value)" />
+        </div>
+        <div class="fg">
+          <label>学制类型</label>
+          <select onchange="setEdu(${e.id},'type',this.value)">
+            ${['全日制','非全日制'].map(o=>`<option ${e.type===o?'selected':''}>${o}</option>`).join('')}
+          </select>
+        </div>
+        <div class="fg">
+          <label>学历</label>
+          <select onchange="setEdu(${e.id},'degree',this.value)">
+            ${['专科','本科','硕士','博士'].map(o=>`<option ${e.degree===o?'selected':''}>${o}</option>`).join('')}
+          </select>
+        </div>
+        <div class="fg">
+          <label>专业</label>
+          <input type="text" value="${esc(e.major)}" placeholder="如：计算机科学"
+            oninput="setEdu(${e.id},'major',this.value)" />
+        </div>
+        <div class="fg full">
+          <label>时间段</label>
+          <div class="date-range">
+            <input type="month" value="${esc(e.start)}" onchange="setEdu(${e.id},'start',this.value)" />
+            <span>至</span>
+            <input type="month" value="${esc(e.end)}" placeholder="留空=至今" onchange="setEdu(${e.id},'end',this.value)" />
+          </div>
+        </div>
+        <div class="fg full">
+          <label>在校经历 <span class="opt">选填</span></label>
+          <textarea rows="2" placeholder="选修课程、竞赛获奖、社团等…"
+            oninput="setEdu(${e.id},'exp',this.value)">${esc(e.exp)}</textarea>
+        </div>
+      </div>`;
+    el.appendChild(d);
+  });
+}
+
+// ─────────────────────────────────────────────
+// Work Experience
+// ─────────────────────────────────────────────
+function addWork() {
+  works.push({ id: ++workId, company:'', industry:'', dept:'', title:'', start:'', end:'', projIds:[] });
+  renderWorks();
+}
+function removeWork(id) { works = works.filter(w => w.id !== id); renderWorks(); }
+function setWork(id, field, val) { const w = works.find(w => w.id === id); if (w) w[field] = val; }
+function toggleWorkProj(wid, pid, checked) {
+  const w = works.find(w => w.id === wid);
+  if (!w) return;
+  if (checked) { if (!w.projIds.includes(pid)) w.projIds.push(pid); }
+  else { w.projIds = w.projIds.filter(p => p !== pid); }
+}
+
+function renderWorks() {
+  const el = document.getElementById('work-list');
+  if (!works.length) {
+    el.innerHTML = '<p style="font-size:.83rem;color:var(--muted)">暂无工作经历。</p>';
+    return;
+  }
+  el.innerHTML = '';
+  const filledProjs = projects.filter(p => p.name || p.content);
+  works.forEach((w, i) => {
+    const d = document.createElement('div');
+    d.className = 'entry-item';
+    const projChecks = filledProjs.length
+      ? `<div class="link-section">
+          <div class="link-section-title">📎 关联项目（勾选此工作期间对应的项目）</div>
+          <div class="proj-checks">
+            ${filledProjs.map(p => `
+              <label class="proj-check-label">
+                <input type="checkbox" ${w.projIds.includes(p.id)?'checked':''}
+                  onchange="toggleWorkProj(${w.id},${p.id},this.checked)" />
+                ${esc(p.name || '未命名项目 #'+p.id)}
+              </label>`).join('')}
+          </div>
+        </div>`
+      : `<div class="link-section">
+          <div class="link-section-title" style="color:var(--orange)">⚠️ 先添加项目文档，再来关联</div>
+        </div>`;
+    d.innerHTML = `
+      <div class="entry-header">
+        <span class="entry-num">工作经历 ${i+1}</span>
+        ${works.length > 1 ? `<button class="btn-danger-ghost" onclick="removeWork(${w.id})">删除</button>` : ''}
+      </div>
+      <div class="grid2">
+        <div class="fg">
+          <label>公司名称 <span class="req">*</span></label>
+          <input type="text" value="${esc(w.company)}" placeholder="如：北京龙智数科技服务有限公司"
+            oninput="setWork(${w.id},'company',this.value)" />
+        </div>
+        <div class="fg">
+          <label>所属行业</label>
+          <input type="text" value="${esc(w.industry)}" placeholder="如：互联网"
+            oninput="setWork(${w.id},'industry',this.value)" />
+        </div>
+        <div class="fg">
+          <label>所属部门 <span class="opt">选填</span></label>
+          <input type="text" value="${esc(w.dept)}" placeholder="如：AI 产品团队"
+            oninput="setWork(${w.id},'dept',this.value)" />
+        </div>
+        <div class="fg">
+          <label>职位名称 <span class="req">*</span></label>
+          <input type="text" value="${esc(w.title)}" placeholder="如：产品经理"
+            oninput="setWork(${w.id},'title',this.value)" />
+        </div>
+        <div class="fg full">
+          <label>在职时间</label>
+          <div class="date-range">
+            <input type="month" value="${esc(w.start)}" onchange="setWork(${w.id},'start',this.value)" />
+            <span>至</span>
+            <input type="month" value="${esc(w.end)}" placeholder="留空=至今" onchange="setWork(${w.id},'end',this.value)" />
+          </div>
+        </div>
+      </div>
+      ${projChecks}`;
+    el.appendChild(d);
+  });
+}
+
+// ─────────────────────────────────────────────
+// Projects
+// ─────────────────────────────────────────────
+function addProj() {
+  projects.push({ id: ++projId, name:'', startDate:'', endDate:'', content:'', filename:'' });
+  renderProjs();
+  renderWorks();
+}
+function removeProj(id) {
+  projects = projects.filter(p => p.id !== id);
+  works.forEach(w => { w.projIds = w.projIds.filter(pid => pid !== id); });
+  renderProjs();
+  renderWorks();
+}
+function setProj(id, field, val) {
+  const p = projects.find(p => p.id === id);
+  if (p) { p[field] = val; }
+  if (field === 'name') renderWorks();
+}
+function clearFile(id) {
+  const p = projects.find(p => p.id === id);
+  if (p) { p.filename = ''; p.content = ''; }
+  renderProjs();
+}
+
+function renderProjs() {
+  const el = document.getElementById('proj-list');
+  el.innerHTML = '';
+  if (!projects.length) {
+    el.innerHTML = '<p style="font-size:.83rem;color:var(--muted)">点击上方「添加项目」。</p>';
+    return;
+  }
+  projects.forEach((p, i) => {
+    const d = document.createElement('div');
+    d.className = 'proj-item';
+    const fileBadge = p.filename
+      ? `<div class="file-badge">📄 ${esc(p.filename)} <button onclick="clearFile(${p.id})" title="移除">×</button></div>`
+      : '';
+    d.innerHTML = `
+      <div class="proj-header">
+        <input type="text" placeholder="项目名称（如：智能外呼机器人）"
+          value="${esc(p.name)}"
+          oninput="setProj(${p.id},'name',this.value)" />
+        ${projects.length > 1 ? `<button class="btn-danger-ghost" onclick="removeProj(${p.id})">删除</button>` : ''}
+      </div>
+      <div class="fg" style="margin-bottom:10px">
+        <label>项目时间段</label>
+        <div class="date-range">
+          <input type="month" value="${esc(p.startDate)}" placeholder="开始年月"
+            onchange="setProj(${p.id},'startDate',this.value)" />
+          <span>至</span>
+          <input type="month" value="${esc(p.endDate)}" placeholder="结束年月（留空=至今）"
+            onchange="setProj(${p.id},'endDate',this.value)" />
+        </div>
+      </div>
+      ${fileBadge}
+      <div class="drop-zone" id="dz${p.id}"
+        onclick="document.getElementById('fu${p.id}').click()"
+        ondragover="dzOver(event,${p.id})"
+        ondragleave="dzLeave(${p.id})"
+        ondrop="dropFile(event,${p.id})">
+        📎 点击或拖拽上传 .txt / .md / .docx / .pdf
+        <input type="file" id="fu${p.id}" accept=".txt,.md,.text,.docx,.pdf" style="display:none"
+          onchange="pickFile(event,${p.id})" />
+      </div>
+      <textarea rows="5"
+        placeholder="或粘贴项目文档内容（PRD、复盘文档、需求描述等）…"
+        oninput="setProj(${p.id},'content',this.value)"
+      >${esc(p.content)}</textarea>
+      <div style="font-size:.72rem;color:var(--muted);margin-top:3px">
+        ${p.content ? `已输入 ${p.content.length} 字` : ''}
+      </div>`;
+    el.appendChild(d);
+  });
+}
+
+function dzOver(e, id)  { e.preventDefault(); document.getElementById('dz'+id)?.classList.add('drag-over'); }
+function dzLeave(id)    { document.getElementById('dz'+id)?.classList.remove('drag-over'); }
+
+async function pickFile(e, id) {
+  const f = e.target.files[0]; if (!f) return;
+  await readFileToProj(f, id);
+}
+async function dropFile(e, id) {
+  e.preventDefault(); dzLeave(id);
+  const f = e.dataTransfer.files[0]; if (!f) return;
+  await readFileToProj(f, id);
+}
+
+async function readFileToProj(file, id) {
+  const ext = file.name.split('.').pop().toLowerCase();
+  const p = projects.find(p => p.id === id);
+  if (!p) return;
+  p.filename = file.name;
+  if (!p.name) p.name = file.name.replace(/\.[^/.]+$/, '');
+  try {
+    if (ext === 'docx') {
+      const buf = await file.arrayBuffer();
+      const result = await mammoth.extractRawValue({ arrayBuffer: buf });
+      p.content = result.value;
+    } else if (ext === 'pdf') {
+      p.content = await extractPdfText(file);
+    } else {
+      p.content = await readAsText(file);
+    }
+  } catch(err) {
+    toast('文件读取失败：' + err.message);
+    p.filename = ''; p.content = '';
+  }
+  renderProjs();
+  renderWorks();
+}
+
+function readAsText(file) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = e => res(e.target.result);
+    r.onerror = () => rej(new Error('读取失败'));
+    r.readAsText(file, 'UTF-8');
+  });
+}
+
+async function extractPdfText(file) {
+  if (!window.pdfjsLib) {
+    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+      'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  }
+  const buf = await file.arrayBuffer();
+  const pdf = await window.pdfjsLib.getDocument({ data: buf }).promise;
+  let text = '';
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    text += content.items.map(item => item.str).join(' ') + '\n';
+  }
+  return text;
+}
+
+function loadScript(src) {
+  return new Promise((res, rej) => {
+    const s = document.createElement('script');
+    s.src = src; s.onload = res; s.onerror = rej;
+    document.head.appendChild(s);
+  });
+}
+
+// ─────────────────────────────────────────────
+// Generate
+// ─────────────────────────────────────────────
+async function generate() {
+  const name  = v('name');
+  const phone = v('phone');
+  if (!name)  { alert('请填写姓名'); document.getElementById('name').focus(); return; }
+  if (!phone) { alert('请填写手机号'); document.getElementById('phone').focus(); return; }
+  if (!works.some(w => w.company && w.title)) {
+    alert('请至少填写一条工作经历（公司名称 + 职位名称）'); return;
+  }
+  if (!projects.some(p => p.content.trim())) {
+    alert('请至少填写一个项目的文档内容'); return;
+  }
+  const worksWithContent = works.filter(w => w.company && w.title);
+  const unlinked = worksWithContent.filter(w => w.projIds.length === 0);
+  if (unlinked.length) {
+    const names = unlinked.map(w => w.company).join('、');
+    if (!confirm(`工作经历「${names}」尚未关联项目，建议先关联。是否继续？`)) return;
+  }
+  const apiKey = ls('apikey');
+  if (!apiKey) { openKeyModal(false); return; }
+  if (!skillContent) { alert('Skill 尚未加载，请等待或刷新页面'); return; }
+
+  // Init UI
+  outputResume = ''; outputEval = ''; outputProj = '';
+  document.getElementById('output-section').classList.remove('hidden');
+  document.getElementById('output-section').scrollIntoView({ behavior:'smooth', block:'start' });
+  clearPanes();
+  setStep(1, 'running');
+  setStep(2, 'pending');
+  document.getElementById('gen-btn').disabled = true;
+  document.getElementById('gen-btn').textContent = '⏳ 生成中…';
+  document.getElementById('btn-dl-resume').disabled = true;
+  document.getElementById('btn-dl-proj').disabled = true;
+  document.getElementById('token-info').textContent = '';
+  generating = true;
+
+  const baseInfo   = buildBaseInfo();
+  const projsText  = buildProjsText();
+  const workProj   = buildWorkProjMsg();
+
+  // ── Step 1: evaluation + polished project doc ──
+  const evalMsg = `请对以下项目文档进行质量评估和AI增强整理。
+
+按照Skill规则，请依次输出：
+1. 「## 📊 项目文档质量评估报告」（按第二步评估报告格式输出总分、各模块得分、建议补充信息）
+2. 一行 「---」 作为分隔
+3. 「## ✨ AI增强版项目梳理文档」（按第六步产出一格式，每个项目逐模块展开，AI补全内容加*标注）
+
+${baseInfo}
+
+${projsText}`;
+
+  try {
+    let evalRaw = '';
+    await streamCall(apiKey, skillContent, evalMsg, chunk => {
+      evalRaw += chunk;
+      const sep = evalRaw.indexOf('\n---\n');
+      if (sep !== -1) {
+        outputEval = evalRaw.substring(0, sep).trim();
+        outputProj = evalRaw.substring(sep + 5).trim();
+      } else {
+        outputEval = evalRaw;
+      }
+      renderPane('eval', outputEval, true);
+      renderPane('proj', outputProj, true);
+    });
+    const sep = evalRaw.indexOf('\n---\n');
+    if (sep !== -1) {
+      outputEval = evalRaw.substring(0, sep).trim();
+      outputProj = evalRaw.substring(sep + 5).trim();
+    } else {
+      outputEval = evalRaw;
+    }
+    renderPane('eval', outputEval, false);
+    renderPane('proj', outputProj, false);
+    setStep(1, 'done');
+  } catch(err) {
+    setStep(1, 'err', err.message);
+    endGenerate(); return;
+  }
+
+  // ── Step 2: resume ──
+  setStep(2, 'running');
+  const resumeMsg = `请根据以下信息生成专业的AI产品经理简历。
+严格按照Skill规则和格式输出完整Markdown简历，直接输出简历正文，不要额外说明。
+
+${baseInfo}
+
+${workProj}
+
+${projsText}`;
+
+  try {
+    await streamCall(apiKey, skillContent, resumeMsg, chunk => {
+      outputResume += chunk;
+      renderPane('resume', outputResume, true);
+      document.getElementById('pane-raw').textContent = outputResume;
+    });
+    renderPane('resume', outputResume, false);
+    document.getElementById('pane-raw').textContent = outputResume;
+    setStep(2, 'done');
+    document.getElementById('btn-dl-resume').disabled = false;
+    document.getElementById('btn-dl-proj').disabled = false;
+  } catch(err) {
+    setStep(2, 'err', err.message);
+  }
+
+  endGenerate();
+}
+
+function buildBaseInfo() {
+  let s = `## 个人信息\n- 姓名：${v('name')}\n- 目标职位：${v('pos')||'AI 产品经理'}\n- 手机：${v('phone')}`;
+  ['email','wechat','birth','workstart','extra'].forEach(id => {
+    const val = v(id); if (!val) return;
+    const labels = { email:'邮箱', wechat:'微信', birth:'出生年月', workstart:'参加工作时间', extra:'补充信息' };
+    s += `\n- ${labels[id]}：${val}`;
+  });
+  if (edus.some(e => e.school)) {
+    s += '\n\n## 教育经历\n';
+    edus.filter(e => e.school).forEach(e => {
+      const period = [e.start, e.end||'至今'].filter(Boolean).join(' – ');
+      s += `- ${e.school}　${e.degree}　${e.major}　${e.type}　${period}`;
+      if (e.exp) s += `（在校：${e.exp}）`;
+      s += '\n';
+    });
+  }
+  return s;
+}
+
+function buildWorkProjMsg() {
+  const filled = works.filter(w => w.company || w.title);
+  if (!filled.length) return '';
+  let s = '## 工作经历与项目关联\n';
+  filled.forEach((w, i) => {
+    const period = [w.start, w.end||'至今'].filter(Boolean).join(' – ');
+    s += `\n### 工作${i+1}：${w.company}　${w.dept?w.dept+'　':''}${w.title}　${period}\n`;
+    const linked = projects.filter(p => w.projIds.includes(p.id) && p.content);
+    if (linked.length) {
+      s += `关联项目：${linked.map(p => p.name||'未命名').join('、')}\n`;
+      linked.forEach(p => {
+        const pd = [p.startDate, p.endDate||'至今'].filter(Boolean).join(' – ');
+        s += `\n#### 项目：${p.name||'未命名'}（${pd}）\n${p.content}\n`;
+      });
+    }
+  });
+  return s;
+}
+
+function buildProjsText() {
+  const filled = projects.filter(p => p.content.trim());
+  if (!filled.length) return '';
+  let s = '## 所有项目文档\n';
+  filled.forEach((p, i) => {
+    const pd = [p.startDate, p.endDate||'至今'].filter(Boolean).join(' – ');
+    s += `\n### 项目${i+1}：${p.name||'未命名'}（${pd}）\n${p.content}\n`;
+  });
+  return s;
+}
+
+// ─────────────────────────────────────────────
+// Streaming API call
+// ─────────────────────────────────────────────
+async function streamCall(apiKey, system, userMsg, onChunk) {
+  const res = await fetch(API_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({
+      model: MODEL,
+      max_tokens: 8000,
+      stream: true,
+      system,
+      messages: [{ role: 'user', content: userMsg }]
+    })
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    const msg = err.error?.message || `HTTP ${res.status}`;
+    if (/401|authentication/i.test(msg)) { toast('API Key 无效'); setTimeout(() => openKeyModal(true), 1200); }
+    throw new Error(msg);
+  }
+  const reader = res.body.getReader();
+  const dec = new TextDecoder();
+  let inTok = 0, outTok = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    for (const ln of dec.decode(value, { stream: true }).split('\n')) {
+      if (!ln.startsWith('data: ')) continue;
+      const raw = ln.slice(6).trim();
+      if (!raw || raw === '[DONE]') continue;
+      try {
+        const j = JSON.parse(raw);
+        if (j.type === 'content_block_delta' && j.delta?.type === 'text_delta') onChunk(j.delta.text);
+        if (j.type === 'message_start') inTok = j.message?.usage?.input_tokens || 0;
+        if (j.type === 'message_delta') outTok = j.usage?.output_tokens || 0;
+      } catch {}
+    }
+  }
+  const ti = document.getElementById('token-info');
+  if (inTok || outTok)
+    ti.textContent = (ti.textContent ? ti.textContent + ' · ' : '') + `输入 ${inTok} / 输出 ${outTok} tokens`;
+}
+
+// ─────────────────────────────────────────────
+// Output helpers
+// ─────────────────────────────────────────────
+function renderPane(name, text, cursor) {
+  const el = document.getElementById('pane-' + name);
+  if (!el) return;
+  el.innerHTML = marked.parse(text || '（生成中…）');
+  if (cursor && generating) {
+    const last = el.lastElementChild;
+    if (last) last.classList.add('cursor');
+  }
+}
+function clearPanes() {
+  ['resume','eval','proj'].forEach(n => { const el = document.getElementById('pane-'+n); if (el) el.innerHTML = ''; });
+  document.getElementById('pane-raw').textContent = '';
+}
+function switchTab(t) {
+  ['resume','eval','proj','raw'].forEach(n => {
+    document.getElementById('pane-'+n).classList.toggle('hidden', n !== t);
+    document.getElementById('tab-'+n).classList.toggle('active', n === t);
+  });
+}
+function setStep(n, state, msg) {
+  const dot = document.getElementById('step'+n+'-dot');
+  const txt = document.getElementById('step'+n+'-txt');
+  dot.className = 'step-dot ' + state;
+  const labels = {
+    1: { pending:'第一步：项目文档评估与 AI 润色', running:'⏳ 第一步：项目文档评估中…', done:'✅ 第一步完成', err:'❌ 第一步失败：'+msg },
+    2: { pending:'第二步：简历生成', running:'⏳ 第二步：简历生成中…', done:'✅ 第二步完成', err:'❌ 第二步失败：'+msg }
+  };
+  txt.textContent = labels[n][state] || state;
+  txt.style.color = state==='done'?'var(--green)':state==='err'?'var(--red)':state==='running'?'var(--blue)':'var(--muted)';
+}
+function endGenerate() {
+  generating = false;
+  document.getElementById('gen-btn').disabled = false;
+  document.getElementById('gen-btn').textContent = '✨ 生成简历 + 项目评估';
+}
+
+// ─────────────────────────────────────────────
+// Download Word
+// ─────────────────────────────────────────────
+async function downloadResumeWord() {
+  if (!outputResume) { toast('请先生成简历'); return; }
+  await ensureDocx();
+  const name = v('name') || '简历';
+  const ym = new Date().toISOString().slice(0,7).replace('-','');
+  buildAndDownloadDocx(outputResume, `${name}_AI产品经理简历_${ym}.docx`);
+}
+async function downloadProjWord() {
+  const text = [outputEval, outputProj].filter(Boolean).join('\n\n---\n\n');
+  if (!text) { toast('请先生成项目评估'); return; }
+  await ensureDocx();
+  const name = v('name') || '项目';
+  const ym = new Date().toISOString().slice(0,7).replace('-','');
+  buildAndDownloadDocx(text, `${name}_增强版项目复盘_${ym}.docx`);
+}
+
+async function ensureDocx() {
+  if (window.docx) return;
+  await loadScript('https://unpkg.com/docx@8.5.0/build/index.js');
+}
+
+function buildAndDownloadDocx(markdown, filename) {
+  const { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, BorderStyle, convertInchesToTwip } = window.docx;
+  const lines = markdown.split('\n');
+  const children = [];
+  for (const line of lines) {
+    if (!line.trim()) { children.push(new Paragraph({})); continue; }
+    if (line.startsWith('# ')) {
+      children.push(new Paragraph({ children:[new TextRun({ text: line.slice(2), bold:true, size:32, color:'1F3864' })], alignment: AlignmentType.CENTER }));
+    } else if (line.startsWith('## ')) {
+      children.push(new Paragraph({ children:[new TextRun({ text: line.slice(3), bold:true, size:22, color:'1F3864' })], border:{ bottom:{ style:BorderStyle.SINGLE, size:6, color:'2E75B6' } } }));
+    } else if (line.startsWith('### ')) {
+      children.push(new Paragraph({ children:[new TextRun({ text: line.slice(4), bold:true, size:20, color:'2E75B6' })] }));
+    } else if (/^[-•]\s/.test(line)) {
+      const txt = line.replace(/^[-•]\s/,'').replace(/\*\*(.*?)\*\*/g,'$1');
+      children.push(new Paragraph({ text: txt, bullet:{ level:0 }, indent:{ left: convertInchesToTwip(0.3), hanging: convertInchesToTwip(0.2) } }));
+    } else if (line.startsWith('---')) {
+      children.push(new Paragraph({ border:{ bottom:{ style:BorderStyle.SINGLE, size:6, color:'2E75B6' } } }));
+    } else {
+      const parts = line.split(/(\*\*.*?\*\*)/);
+      const runs = parts.map(part =>
+        part.startsWith('**') && part.endsWith('**')
+          ? new TextRun({ text: part.slice(2,-2), bold:true, color:'1F3864' })
+          : new TextRun({ text: part })
+      );
+      children.push(new Paragraph({ children: runs }));
+    }
+  }
+  const doc = new Document({
+    sections: [{ properties:{ page:{ margin:{ top:720, right:720, bottom:720, left:720 } } }, children }]
+  });
+  Packer.toBlob(doc).then(blob => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename; a.click();
+    URL.revokeObjectURL(url);
+    toast('Word 文档已下载');
+  });
+}
+
+// ─────────────────────────────────────────────
+// Misc
+// ─────────────────────────────────────────────
+function copyMd()  { navigator.clipboard.writeText(outputResume).then(() => toast('已复制简历 Markdown')); }
+function clearOut() {
+  if (generating) return;
+  outputResume = ''; outputEval = ''; outputProj = '';
+  document.getElementById('output-section').classList.add('hidden');
+  document.getElementById('btn-dl-resume').disabled = true;
+  document.getElementById('btn-dl-proj').disabled = true;
+}
+function v(id)  { return document.getElementById(id)?.value.trim() || ''; }
+function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function toast(msg) {
+  const t = document.createElement('div');
+  t.className = 'toast'; t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2500);
+}
+
+// ─────────────────────────────────────────────
+// Default fallback skill
+// ─────────────────────────────────────────────
+const DEFAULT_SKILL = `你是一个专业的AI产品经理简历生成专家。
+
+## 核心规则
+1. 始终直接输出，不打断用户
+2. 每条bullet：主语（我）+ 动作 + 量化结果
+3. 因果链结构：针对[痛点] → [做了什么] → [量化结果]
+4. 禁止功能描述句、通用能力词、无数字条目
+
+## 简历输出格式
+
+# [姓名] | [目标职位]
+[联系方式]
+---
+## 个人优势
+- 【关键词】：[支撑句+项目锚点+核心指标]（3-4条）
+---
+## 工作经历
+### [公司] · [职位] · [时间]
+**[项目名] | [技术标签]**
+- 【模块】针对[痛点] → [做了什么] → [量化结果]（每项目4-7条）
+---
+## 教育背景
+[学校 · 专业 · 学位 · 时间]
+`;
+</script>
+</body>
+</html>
