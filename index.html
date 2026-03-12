@@ -766,8 +766,10 @@ async function readFileToProj(file, id) {
   try {
     if (ext === 'docx') {
       const buf = await file.arrayBuffer();
-      const result = await mammoth.extractRawValue({ arrayBuffer: buf });
-      p.content = result.value;
+      const result = await mammoth.convertToHtml({ arrayBuffer: buf });
+      const div = document.createElement('div');
+      div.innerHTML = result.value;
+      p.content = div.innerText || div.textContent || '';
     } else if (ext === 'pdf') {
       p.content = await extractPdfText(file);
     } else {
