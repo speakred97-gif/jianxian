@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI 产品经理简历生成器</title>
+  <style>
+    :root {
+      --primary: #1F3864;
+      --blue: #2E75B6;
+      --purple: #7C3AED;
+      --bg: #F8FAFC;
+      --card: #FFFFFF;
+      --border: #E2E8F0;
+      --text: #1A202C;
+      --muted: #718096;
+      --green: #38A169;
+      --red: #E53E3E;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+    .hidden { display: none !important; }
+
+    /* ── Header ── */
+    .header {
+      background: var(--primary);
+      color: #fff;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 200;
+      box-shadow: 0 2px 8px rgba(0,0,0,.25);
+    }
+    .header h1 { font-size: 1.1rem; font-weight: 700; }
+    .header-right { display: flex; align-items: center; gap: 12px; }
+    .header-status { font-size: .78rem; opacity: .85; }
+
+    /* ── Buttons ── */
+    .btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: .85rem;
+      font-weight: 500;
+      transition: filter .15s;
+    }
+    .btn:hover { filter: brightness(.9); }
+    .btn:disabled { opacity: .45; cursor: not-allowed; filter: none; }
+    .btn-ghost { background: rgba(255,255,255,.15); color: #fff; border: 1px solid rgba(255,255,255,.3); }
+    .btn-primary { background: var(--blue); color: #fff; }
+    .btn-green { background: var(--green); color: #fff; }
+    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+    .btn-lg { padding: 13px 36px; font-size: 1rem; border-radius: 8px; }
+    .btn-danger-ghost { background: transparent; border: 1px solid #FCA5A5; color: var(--red); padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: .75rem; }
+    .btn-danger-ghost:hover { background: #FEF2F2; }
+
+    /* ── Modal ── */
+    .overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.55);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 900;
+    }
+    .modal {
+      background: #fff;
+      border-radius: 14px;
+      padding: 32px;
+      max-width: 460px;
+      width: 92%;
+      box-shadow: 0 24px 60px rgba(0,0,0,.3);
+    }
+    .modal h2 { font-size: 1.2rem; color: var(--primary); margin-bottom: 8px; }
+    .modal p  { font-size: .85rem; color: var(--muted); line-height: 1.7; margin-bottom: 12px; }
+    .modal p a { color: var(--blue); }
+    .modal-actions { display: flex; gap: 10px; margin-top: 18px; }
+    .eye-btn {
+      position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; cursor: pointer; color: var(--muted);
+      font-size: 1rem; padding: 2px 4px;
+    }
+
+    /* ── Layout ── */
+    .wrap { max-width: 860px; margin: 0 auto; padding: 24px 16px; }
+
+    /* ── Card ── */
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 22px; margin-bottom: 16px; }
+    .card-title {
+      font-size: .95rem; font-weight: 700; color: var(--primary);
+      margin-bottom: 16px; padding-bottom: 10px;
+      border-bottom: 2px solid var(--blue);
+    }
+
+    /* ── Form ── */
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    @media(max-width:560px){ .grid2 { grid-template-columns: 1fr; } }
+    .full { grid-column: 1/-1; }
+    .fg { display: flex; flex-direction: column; gap: 5px; }
+    label { font-size: .82rem; font-weight: 600; color: var(--text); }
+    label .req { color: var(--red); margin-left: 2px; }
+    label .opt { color: var(--muted); font-weight: 400; font-size: .75rem; margin-left: 4px; }
+    input[type=text], input[type=password], textarea, select {
+      width: 100%; padding: 9px 11px;
+      border: 1px solid var(--border); border-radius: 6px;
+      font-size: .85rem; font-family: inherit; color: var(--text);
+      background: #fff; transition: border-color .2s;
+    }
+    input:focus, textarea:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(46,117,182,.1); }
+    textarea { resize: vertical; min-height: 90px; }
+    .rel { position: relative; }
+
+    /* ── Projects ── */
+    .proj-item {
+      border: 1px solid var(--border);
+      border-radius: 8px; padding: 14px;
+      background: var(--bg); margin-bottom: 10px;
+    }
+    .proj-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+    .proj-header input { flex: 1; font-weight: 600; }
+    .drop-zone {
+      border: 2px dashed var(--border); border-radius: 6px;
+      padding: 14px; text-align: center; cursor: pointer;
+      transition: all .2s; margin-bottom: 8px; font-size: .8rem; color: var(--muted);
+    }
+    .drop-zone:hover { border-color: var(--blue); background: rgba(46,117,182,.04); color: var(--blue); }
+    .add-proj-btn {
+      width: 100%; padding: 11px; margin-top: 4px;
+      border: 2px dashed var(--border); border-radius: 8px;
+      background: none; cursor: pointer; color: var(--muted);
+      font-size: .85rem; transition: all .2s;
+    }
+    .add-proj-btn:hover { border-color: var(--blue); color: var(--blue); background: rgba(46,117,182,.04); }
+
+    /* ── Alert ── */
+    .alert { padding: 11px 15px; border-radius: 8px; font-size: .84rem; margin-bottom: 16px; }
+    .alert-info { background: #EFF6FF; border: 1px solid #BFDBFE; color: #1E40AF; }
+
+    /* ── Generate ── */
+    .gen-wrap { text-align: center; padding: 8px 0 4px; }
+    .gen-note { font-size: .78rem; color: var(--muted); margin-top: 8px; }
+
+    /* ── Output ── */
+    .out-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-top: 24px; }
+    .status-row { display: flex; align-items: center; gap: 8px; font-size: .78rem; color: var(--muted); margin-bottom: 12px; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); flex-shrink: 0; }
+    .dot.spin { background: var(--blue); animation: pulse 1.2s infinite; }
+    @keyframes pulse { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.4);opacity:.6} }
+    .tabs { display: flex; border-bottom: 2px solid var(--border); margin-bottom: 14px; }
+    .tab {
+      padding: 8px 18px; border: none; background: none;
+      cursor: pointer; font-size: .85rem; color: var(--muted);
+      border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all .15s;
+    }
+    .tab.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 600; }
+    .out-box { min-height: 160px; }
+    .out-actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+
+    /* ── Markdown styles ── */
+    .md h1 { font-size: 1.5rem; color: var(--primary); margin: 12px 0 6px; }
+    .md h2 { font-size: 1.1rem; color: var(--primary); margin: 14px 0 6px; padding-bottom: 5px; border-bottom: 1px solid var(--border); }
+    .md h3 { font-size: .95rem; color: var(--blue); margin: 10px 0 4px; }
+    .md p  { font-size: .875rem; margin: 6px 0; }
+    .md ul { margin: 4px 0 4px 20px; }
+    .md li { font-size: .875rem; margin: 3px 0; }
+    .md strong { color: var(--primary); }
+    .md table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+    .md td,.md th { padding: 7px 11px; border: 1px solid var(--border); font-size: .82rem; }
+    .md th { background: var(--bg); font-weight: 600; }
+    .md code { background: #F1F5F9; padding: 1px 5px; border-radius: 3px; font-size: .82rem; }
+    .md pre  { background: #F1F5F9; padding: 12px; border-radius: 6px; overflow-x: auto; font-size: .8rem; }
+    .md blockquote { border-left: 3px solid var(--blue); padding-left: 12px; color: var(--muted); margin: 6px 0; font-style: italic; }
+    .md hr { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
+    .cursor::after { content:'▋'; color: var(--blue); animation: blink .7s step-end infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+    /* ── Print ── */
+    @media print {
+      .header,.alert,.card:not(.out-card),.gen-wrap,.tabs,.out-actions,.status-row,
+      #output-section > .out-card > .tabs,
+      #output-section > .out-card > .out-actions { display: none !important; }
+      .out-card { border: none; padding: 0; box-shadow: none; }
+      body { background: white; }
+    }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
+      background: #1A202C; color: #fff; padding: 10px 22px;
+      border-radius: 8px; font-size: .85rem; z-index: 9999;
+      animation: slideUp .25s ease;
+    }
+    @keyframes slideUp { from{opacity:0;transform:translateX(-50%) translateY(10px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
+  </style>
+</head>
+<body>
+
+<!-- ══ API Key Modal ══ -->
+<div id="key-modal" class="overlay hidden">
+  <div class="modal">
+    <h2>🔑 设置 Anthropic API Key</h2>
+    <p>
+      本应用在您的浏览器中<strong>直接调用 Anthropic API</strong>，无需后端服务器。<br>
+      API Key 仅保存在本地 localStorage，<strong>不会上传到任何服务器</strong>。<br>
+      每次生成消耗的是<strong>您自己账户的 Token 配额</strong>，与 Claude.ai 订阅共用。
+    </p>
+    <p>
+      没有 API Key？前往
+      <a href="https://console.anthropic.com/account/keys" target="_blank">console.anthropic.com</a>
+      获取。
+    </p>
+    <div class="fg">
+      <label for="key-inp">API Key</label>
+      <div class="rel">
+        <input type="password" id="key-inp" placeholder="sk-ant-api03-…" />
+        <button class="eye-btn" onclick="toggleEye()">👁</button>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" style="flex:1" onclick="saveKey()">保存并继续</button>
+      <button class="btn btn-outline" id="skip-btn" onclick="closeKeyModal()">跳过</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ Header ══ -->
+<div class="header">
+  <h1>🎯 AI 产品经理简历生成器</h1>
+  <div class="header-right">
+    <span class="header-status" id="key-status"></span>
+    <button class="btn btn-ghost" onclick="openKeyModal(true)">API Key 设置</button>
+  </div>
+</div>
+
+<!-- ══ Main ══ -->
+<div class="wrap">
+
+  <div class="alert alert-info">
+    💡 <strong>工作原理：</strong>填写信息 → 浏览器直接调用 Anthropic API → AI 基于您的项目文档生成专业简历。
+    每次调用使用您自己账户的 Token 配额，类似 Claude.ai Artifacts 的方式。
+  </div>
+
+  <!-- 基本信息 -->
+  <div class="card">
+    <div class="card-title">📋 基本信息</div>
+    <div class="grid2">
+      <div class="fg">
+        <label for="name">姓名 <span class="req">*</span></label>
+        <input type="text" id="name" placeholder="可填化名" />
+      </div>
+      <div class="fg">
+        <label for="pos">目标职位 <span class="opt">（默认：AI 产品经理）</span></label>
+        <input type="text" id="pos" placeholder="AI 产品经理" />
+      </div>
+      <div class="fg">
+        <label for="contact">联系方式 <span class="opt">可选</span></label>
+        <input type="text" id="contact" placeholder="电话 · 微信 · 邮箱" />
+      </div>
+      <div class="fg">
+        <label for="years">工作年限 <span class="opt">可选</span></label>
+        <input type="text" id="years" placeholder="例：3 年" />
+      </div>
+      <div class="fg">
+        <label for="edu">教育背景 <span class="opt">可选</span></label>
+        <input type="text" id="edu" placeholder="学校 · 专业 · 学位 · 毕业年份" />
+      </div>
+      <div class="fg">
+        <label for="extra">补充信息 <span class="opt">可选</span></label>
+        <input type="text" id="extra" placeholder="PMP 证书、Python、SCI 论文等" />
+      </div>
+    </div>
+  </div>
+
+  <!-- 工作经历 -->
+  <div class="card">
+    <div class="card-title">🏢 工作经历 <span class="req">*</span></div>
+    <div class="fg">
+      <label for="work">公司 · 部门 · 职位 · 时间段（每段一行）</label>
+      <textarea id="work" rows="5" placeholder="示例：
+2022.07 - 至今　腾讯　TEG 技术工程事业群　AI 产品经理
+2020.06 - 2022.06　字节跳动　智能创作平台　产品经理"></textarea>
+    </div>
+  </div>
+
+  <!-- 项目文档 -->
+  <div class="card">
+    <div class="card-title">📂 项目文档 <span class="req">*</span></div>
+    <p style="font-size:.83rem;color:var(--muted);margin-bottom:14px;">
+      每个项目可上传 .txt / .md 文件，或直接粘贴 PRD、复盘文档、需求文档等内容。支持多个项目。
+    </p>
+    <div id="proj-list"></div>
+    <button class="add-proj-btn" onclick="addProj()">＋ 添加项目</button>
+  </div>
+
+  <!-- 生成按钮 -->
+  <div class="gen-wrap">
+    <button class="btn btn-primary btn-lg" id="gen-btn" onclick="generate()">✨ 生成简历</button>
+    <p class="gen-note">生成过程约 30 – 60 秒，支持流式实时预览</p>
+  </div>
+
+  <!-- 输出区 -->
+  <div id="output-section" class="hidden">
+    <div class="out-card">
+      <div class="status-row">
+        <div class="dot" id="dot"></div>
+        <span id="status-txt">就绪</span>
+        <span style="margin-left:auto;font-size:.72rem" id="token-info"></span>
+      </div>
+      <div class="tabs">
+        <button class="tab active" id="tab-md" onclick="switchTab('md')">简历预览</button>
+        <button class="tab" id="tab-raw" onclick="switchTab('raw')">Markdown 原文</button>
+      </div>
+      <div class="out-box">
+        <div id="pane-md" class="md"></div>
+        <pre id="pane-raw" class="hidden" style="white-space:pre-wrap;font-size:.8rem;font-family:monospace;"></pre>
+      </div>
+      <div class="out-actions">
+        <button class="btn btn-outline" onclick="copyMd()">📋 复制 Markdown</button>
+        <button class="btn btn-outline" onclick="copyHtml()">📄 复制 HTML</button>
+        <button class="btn btn-green" onclick="window.print()">🖨️ 打印 / 导出 PDF</button>
+        <button class="btn btn-outline" onclick="clearOut()" style="margin-left:auto">🗑️ 清除重来</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /wrap -->
+
+<!-- ══ Scripts ══ -->
+<script src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js"></script>
+<script>
+// ── Skill system prompt (embedded from ai-pm-resume-generator-SKILL-0305-v2.md) ──
+const SYSTEM = `你是一个专业的AI产品经理简历生成专家。请严格遵守以下所有规则。
+
+## 输出规则（最高优先级）
+
+1. **始终直接输出简历**，无论文档质量好坏，诊断在内部执行，不打断用户等待确认
+2. **简历bullet禁止写功能描述句**，每条bullet必须有：主语（我）+ 动作（做了什么）+ 结果（带来什么）
+3. **禁止在简历正文出现「三层成果表格」**，成果数字内嵌进每条bullet末尾
+4. **禁止写入简历的表达：**
+   - 「梳理业务流程」「产出PRD/原型图」「参与需求评审」——无法体现AI技术价值
+   - 「综合能力强」「同理心」「深入用户」——虚词，无法量化
+   - 成果没有数字的条目——必须有至少一个量化指标，实在没有用【待核实】标注
+5. **每条bullet强制执行因果链结构：**
+   > 针对[发现的问题/痛点] → [设计/主导/优化了什么] → [带来什么量化结果]
+
+## 项目类型识别
+
+| 类型代码 | 项目类型 |
+|----------|----------|
+| LLM-RAG | 检索增强生成（企业知识库、法律助手、客服机器人） |
+| LLM-GEN | 纯生成类（AI写作、公文生成、营销文案） |
+| LLM-AGENT | 智能体/工作流自动化（智能外呼、AI RPA） |
+| LLM-CONV | 对话/多轮交互（智能客服、陪伴机器人） |
+| CV | 计算机视觉（图像识别、目标检测、OCR） |
+| CV-GEN | 视觉生成（AI生图、虚拟试衣） |
+| ASR/TTS | 语音识别/合成（会议纪要、语音克隆） |
+| MULTIMODAL | 多模态融合 |
+| REC | 推荐/排序系统 |
+| CLASSIFY | 分类/判别类（文本分类、意图识别） |
+| FINETUNE | 模型微调/训练（SFT/RLHF） |
+| DATA | 数据智能/分析 |
+
+一个项目可同时属于多个类型。
+
+## 动态模块选配规则
+
+必选（所有项目）：U1 + U2 + U3 + U4
+
+按类型追加：
+- 含 LLM-RAG    → R1 + R2
+- 含 LLM-GEN    → G1 + G2 + G3（若有引导交互）
+- 含 LLM-AGENT  → A1 + A2 + A3
+- 含 CV         → C1 + C2
+- 含 CV-GEN     → C3
+- 含 ASR/TTS    → S1
+- 含 REC        → RC1 + RC2
+- 含 FINETUNE   → F1 + F2
+- 含 LLM-CONV   → G2 + A2 + G3
+- 含 CLASSIFY   → A2
+
+## 模块写法公式
+
+**U1 需求调研与场景定义**
+> 针对[用户群体]在[场景]下[痛点]的问题，调研[N名用户/N份问卷]，识别[X类]高频场景，完成[N轮]需求迭代
+
+**U2 大模型/算法选型**
+> 针对[场景特殊要求]，基于[N个评测维度]构建评测集，横向对比[X个]模型/方案，选定[最终方案]，在[关键指标]上表现最优
+
+**U3 评测体系建设**
+> 针对[缺乏标准化评估导致XX问题]，设计[N个维度]评测标准，构建[X条]测试用例集，建立人工+自动双轨机制，支撑模型迭代闭环
+
+**U4 Badcase迭代闭环**
+> 建立「触发→问题分类→归因分析→修复→回归测试」闭环，累计处理[N类]问题，完成[X轮]版本迭代，[核心指标]提升[X%]
+
+**R1 知识库构建（RAG）**
+> 针对[知识来源分散/引用不准]的问题，梳理[N份]文档，制定分块策略（chunk_size/overlap），建立[X级]元数据标签体系
+
+**R2 RAG Pipeline优化**
+> 针对[召回率低/幻觉率高]，设计/优化[查询改写/混合检索/Rerank/引用溯源]等节点，将[召回率/准确率]从[x%]提升至[x%]
+
+**G1 生成质量体系（GEN）**
+> 针对[生成内容格式混乱/逻辑断层]，建立[N维度]评测标准，月均评测[N份]，评分从[x]提升至[x]（5分制）
+
+**G2 Prompt工程与模板体系**
+> 针对[逻辑断层/格式不规范]，设计[N类]Prompt模板，引入[CoT/Few-shot/ReAct]等技术，[质量指标]提升[X%]
+
+**G3 引导式交互设计**
+> 针对[用户不知填什么/信息不完整]，设计填槽/多轮对话双模式，覆盖[N个]核心词槽，意图识别准确率达[x%]
+
+**A1 Agent架构设计（AGENT）**
+> 针对[多步骤任务需人工串联]，设计规划-执行-记忆-工具四层架构，集成[N个]工具/API，支持[X类]任务链自动执行
+
+**A2 意图体系与对话状态管理**
+> 针对[意图识别不准导致XX]，构建[N类]意图分类体系，设计[X层]对话状态管理，多轮识别准确率达[x%]，转出率降低[X%]
+
+**A3 人机协作流程设计**
+> 针对[全量转人工浪费资源]，设计AI自动/实时转人工/异步跟进三级处置机制，人工干预率控制在[x%]以内
+
+**S1 语音能力集成与调优（ASR/TTS）**
+> 针对[噪声环境识别率低/延迟高]，对接[X家]语音引擎，识别准确率从[x%]提升至[x%]，平均响应延迟控制在[Xms]以内
+
+**RC1 特征工程与召回策略（REC）**
+> 针对[召回覆盖不足]，设计[N类]用户/物品特征，建立[X路]召回通道，召回率@100提升至[x%]
+
+**RC2 排序模型与A/B实验**
+> 主导[N轮]A/B实验，优化[CTR/CVR/GMV]等指标，累计迭代[X个]版本，线上[核心指标]提升[x%]
+
+**F1 训练数据工程（FINETUNE）**
+> 针对[领域数据稀缺/质量差]，构建[N万条]SFT训练数据，通过[数据清洗/难例挖掘]，数据质量评分达[x%]
+
+**F2 微调与对齐工程**
+> 主导[SFT/RLHF/DPO]全流程，在[基座模型]上完成[N轮]训练，领域评测集上超越基线[x%]
+
+## 三层业绩成果（内嵌进bullet末尾，不作独立模块）
+
+- 第一层：模型/技术效果（准确率/召回率/mAP/MOS/延迟）
+- 第二层：业务价值（人效提升/耗时缩短/处理量增加）
+- 第三层：商业价值（合同金额/客户数/续费率/标杆案例）
+
+## 增强模式（文档完整度 < 70分时）
+
+- 原文内容原样整理
+- AI推断内容：在条目末尾加 * 号，数字后标注行业参考区间，例如：意图识别准确率达92%（行业参考：88%～96%）*
+- 简历底部必须附说明：
+  > * 内容来源说明：简历中标注 * 的内容，部分来自AI基于行业常识的推断补全，并非来自原始项目文档。建议使用前核对修改。
+
+## 输出格式（严格按此Markdown结构）
+
+# [姓名] | [目标职位]
+
+[联系方式（若有）]
+
+---
+
+## 个人优势
+
+- 【关键词】：[支撑句 + 项目锚点 + 核心指标]
+（3～4条，每条绑定具体项目和技术，不写通用能力）
+
+---
+
+## 工作经历
+
+### [公司名] · [职位] · [时间段]
+
+**[项目名] | [技术架构标签，如 LLM-AGENT + ASR/TTS]**
+
+- 【U1·需求】针对[痛点] → [做了什么] → [量化结果]
+- 【U2·选型】针对[痛点] → [做了什么] → [量化结果]
+（每项目4～7条bullet，覆盖选配模块）
+
+---
+
+## 教育背景（若有）
+
+[学校 · 专业 · 学位 · 时间]
+
+---
+（若有AI补全内容，在此处附说明）
+`;
+
+// ── State ──
+const API = 'https://api.anthropic.com/v1/messages';
+const MODEL = 'claude-sonnet-4-6';
+let projects = [];
+let projId = 0;
+let generating = false;
+let output = '';
+
+// ── Init ──
+document.addEventListener('DOMContentLoaded', () => {
+  addProj();
+  const k = ls('apikey');
+  if (!k) openKeyModal(false);
+  else setKeyStatus(true);
+});
+
+// ── localStorage helpers ──
+function ls(k, v) {
+  if (v === undefined) return localStorage.getItem('anth_' + k);
+  if (v === null) localStorage.removeItem('anth_' + k);
+  else localStorage.setItem('anth_' + k, v);
+}
+
+// ── API Key modal ──
+function openKeyModal(canSkip) {
+  document.getElementById('skip-btn').classList.toggle('hidden', !canSkip);
+  const k = ls('apikey');
+  if (k) document.getElementById('key-inp').value = k;
+  document.getElementById('key-modal').classList.remove('hidden');
+}
+function closeKeyModal() { document.getElementById('key-modal').classList.add('hidden'); }
+function toggleEye() {
+  const i = document.getElementById('key-inp');
+  i.type = i.type === 'password' ? 'text' : 'password';
+}
+function saveKey() {
+  const v = document.getElementById('key-inp').value.trim();
+  if (!v) { alert('请输入 API Key'); return; }
+  ls('apikey', v);
+  setKeyStatus(true);
+  closeKeyModal();
+}
+function setKeyStatus(ok) {
+  document.getElementById('key-status').textContent = ok ? '✅ API Key 已设置' : '⚠️ 未设置';
+}
+
+// ── Projects ──
+function addProj() {
+  const id = ++projId;
+  projects.push({ id, name: '', content: '' });
+  renderProjs();
+}
+function removeProj(id) {
+  projects = projects.filter(p => p.id !== id);
+  renderProjs();
+}
+function setProj(id, field, val) {
+  const p = projects.find(p => p.id === id);
+  if (p) p[field] = val;
+}
+
+function renderProjs() {
+  const el = document.getElementById('proj-list');
+  el.innerHTML = '';
+  projects.forEach((p, i) => {
+    const d = document.createElement('div');
+    d.className = 'proj-item';
+    d.innerHTML = `
+      <div class="proj-header">
+        <input type="text" placeholder="项目名称（如：智能外呼机器人）"
+          value="${esc(p.name)}"
+          oninput="setProj(${p.id},'name',this.value)" style="font-weight:600" />
+        ${projects.length > 1 ? `<button class="btn-danger-ghost" onclick="removeProj(${p.id})">删除</button>` : ''}
+      </div>
+      <div class="drop-zone"
+        onclick="document.getElementById('fu${p.id}').click()"
+        ondragover="event.preventDefault()"
+        ondrop="dropFile(event,${p.id})">
+        📎 点击或拖拽上传 .txt / .md 文件
+        <input type="file" id="fu${p.id}" accept=".txt,.md,.text" style="display:none"
+          onchange="pickFile(event,${p.id})" />
+      </div>
+      <textarea rows="6"
+        placeholder="或粘贴项目文档内容（PRD、复盘文档、需求描述等）…"
+        oninput="setProj(${p.id},'content',this.value)"
+      >${esc(p.content)}</textarea>
+      <div style="font-size:.72rem;color:var(--muted);margin-top:3px">
+        ${p.content ? `已输入 ${p.content.length} 字` : ''}
+      </div>`;
+    el.appendChild(d);
+  });
+}
+
+function pickFile(e, id) {
+  const f = e.target.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = ev => {
+    setProj(id, 'content', ev.target.result);
+    const p = projects.find(p => p.id === id);
+    if (p && !p.name) p.name = f.name.replace(/\.[^/.]+$/, '');
+    renderProjs();
+  };
+  r.readAsText(f, 'UTF-8');
+}
+function dropFile(e, id) {
+  e.preventDefault();
+  const f = e.dataTransfer.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = ev => { setProj(id, 'content', ev.target.result); renderProjs(); };
+  r.readAsText(f, 'UTF-8');
+}
+
+// ── Generate ──
+async function generate() {
+  const name    = v('name');
+  const work    = v('work');
+  const pos     = v('pos') || 'AI 产品经理';
+  const contact = v('contact');
+  const years   = v('years');
+  const edu     = v('edu');
+  const extra   = v('extra');
+
+  if (!name)  { alert('请填写姓名'); document.getElementById('name').focus(); return; }
+  if (!work)  { alert('请填写工作经历'); document.getElementById('work').focus(); return; }
+  if (!projects.some(p => p.content.trim())) {
+    alert('请至少填写一个项目的文档内容'); return;
+  }
+
+  const apiKey = ls('apikey');
+  if (!apiKey) { openKeyModal(false); return; }
+
+  // Build user message
+  let msg = `请根据以下信息生成专业的AI产品经理简历：
+
+## 基本信息
+- 姓名：${name}
+- 目标职位：${pos}
+${contact ? `- 联系方式：${contact}` : ''}
+${years   ? `- 工作年限：${years}`   : ''}
+${edu     ? `- 教育背景：${edu}`     : ''}
+${extra   ? `- 补充信息：${extra}`   : ''}
+
+## 工作经历
+${work}
+
+## 项目文档
+`;
+  projects.forEach((p, i) => {
+    if (!p.content.trim()) return;
+    msg += `\n### 项目${i + 1}：${p.name || '未命名项目'}\n${p.content}\n`;
+  });
+  msg += '\n请严格按照规则和格式输出完整Markdown简历。';
+
+  // UI
+  output = '';
+  document.getElementById('output-section').classList.remove('hidden');
+  document.getElementById('pane-md').innerHTML = '';
+  document.getElementById('pane-raw').textContent = '';
+  document.getElementById('output-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  setStatus(true, '正在生成，请稍候…');
+  document.getElementById('gen-btn').disabled = true;
+  document.getElementById('gen-btn').textContent = '⏳ 生成中…';
+  generating = true;
+
+  try {
+    const res = await fetch(API, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        max_tokens: 8000,
+        stream: true,
+        system: SYSTEM,
+        messages: [{ role: 'user', content: msg }]
+      })
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error?.message || `HTTP ${res.status}`);
+    }
+
+    const reader = res.body.getReader();
+    const dec = new TextDecoder();
+    let inTok = 0, outTok = 0;
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      const lines = dec.decode(value, { stream: true }).split('\n');
+      for (const ln of lines) {
+        if (!ln.startsWith('data: ')) continue;
+        const raw = ln.slice(6).trim();
+        if (!raw || raw === '[DONE]') continue;
+        try {
+          const j = JSON.parse(raw);
+          if (j.type === 'content_block_delta' && j.delta?.type === 'text_delta') {
+            output += j.delta.text;
+            renderOutput(true);
+          }
+          if (j.type === 'message_start') inTok = j.message?.usage?.input_tokens || 0;
+          if (j.type === 'message_delta') outTok = j.usage?.output_tokens || 0;
+        } catch {}
+      }
+    }
+
+    setStatus(false, '生成完成 ✓');
+    if (inTok || outTok) document.getElementById('token-info').textContent =
+      `输入 ${inTok} tokens · 输出 ${outTok} tokens`;
+    renderOutput(false);
+
+  } catch (err) {
+    setStatus(false, `生成失败：${err.message}`, true);
+    document.getElementById('pane-md').innerHTML =
+      `<p style="color:var(--red)">❌ ${err.message}</p>`;
+    if (/401|authentication/i.test(err.message)) {
+      toast('API Key 无效，请重新设置');
+      setTimeout(() => openKeyModal(true), 1200);
+    }
+  } finally {
+    generating = false;
+    document.getElementById('gen-btn').disabled = false;
+    document.getElementById('gen-btn').textContent = '✨ 生成简历';
+  }
+}
+
+function renderOutput(cursor) {
+  const md = document.getElementById('pane-md');
+  md.innerHTML = marked.parse(output);
+  if (cursor && generating) {
+    const last = md.lastElementChild;
+    if (last) last.classList.add('cursor');
+  }
+  document.getElementById('pane-raw').textContent = output;
+}
+
+// ── Tabs ──
+function switchTab(t) {
+  document.getElementById('pane-md').classList.toggle('hidden', t !== 'md');
+  document.getElementById('pane-raw').classList.toggle('hidden', t !== 'raw');
+  document.getElementById('tab-md').classList.toggle('active', t === 'md');
+  document.getElementById('tab-raw').classList.toggle('active', t === 'raw');
+}
+
+// ── Actions ──
+function copyMd()   { navigator.clipboard.writeText(output).then(() => toast('已复制 Markdown')); }
+function copyHtml() { navigator.clipboard.writeText(document.getElementById('pane-md').innerHTML).then(() => toast('已复制 HTML')); }
+function clearOut() {
+  if (generating) return;
+  output = '';
+  document.getElementById('output-section').classList.add('hidden');
+}
+
+// ── Helpers ──
+function v(id)  { return document.getElementById(id)?.value.trim() || ''; }
+function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function setStatus(spin, msg, err) {
+  const dot = document.getElementById('dot');
+  dot.className = 'dot' + (spin ? ' spin' : '');
+  if (err) dot.style.background = 'var(--red)';
+  else dot.style.background = '';
+  document.getElementById('status-txt').textContent = msg;
+}
+
+function toast(msg) {
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2500);
+}
+</script>
+</body>
+</html>
