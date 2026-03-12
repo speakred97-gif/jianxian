@@ -246,22 +246,55 @@
 <!-- ══ API Key Modal ══ -->
 <div id="key-modal" class="overlay hidden">
   <div class="modal">
-    <h2>🔑 设置 Anthropic API Key</h2>
-    <p>
-      本应用在您的浏览器中<strong>直接调用 Anthropic API</strong>，无需后端服务器。<br>
-      API Key 仅保存在本地 localStorage，<strong>不会上传到任何服务器</strong>。
+    <h2>🔑 API 设置</h2>
+    <p style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:6px;padding:10px;color:#166534;font-size:.82rem;line-height:1.6">
+      🔒 <strong>100% 本地安全：</strong>API Key 仅存在您浏览器的 localStorage，直接从浏览器发往 AI 服务商，本站<strong>无后端、无服务器</strong>，物理上无法收集您的 Key。
     </p>
-    <p>
-      没有 API Key？前往
-      <a href="https://console.anthropic.com/account/keys" target="_blank">console.anthropic.com</a>
-      获取。
-    </p>
-    <div class="fg">
-      <label for="key-inp">API Key</label>
-      <div class="rel">
-        <input type="password" id="key-inp" placeholder="sk-ant-api03-…" />
-        <button class="eye-btn" onclick="toggleEye()">👁</button>
+    <div class="fg" style="margin-top:12px">
+      <label for="provider-sel">选择 AI 服务商</label>
+      <select id="provider-sel" onchange="onProviderChange()">
+        <option value="anthropic">Anthropic (Claude)</option>
+        <option value="openai">OpenAI 兼容（Kimi / 火山引擎 / DeepSeek / 通义等）</option>
+      </select>
+    </div>
+    <div id="anthropic-fields">
+      <div class="fg" style="margin-top:10px">
+        <label for="key-inp">API Key</label>
+        <div class="rel">
+          <input type="password" id="key-inp" placeholder="sk-ant-api03-…" />
+          <button class="eye-btn" onclick="toggleEye('key-inp')">👁</button>
+        </div>
       </div>
+      <p style="font-size:.78rem;color:var(--muted);margin-top:6px">
+        前往 <a href="https://console.anthropic.com/account/keys" target="_blank">console.anthropic.com</a> 获取
+      </p>
+    </div>
+    <div id="openai-fields" class="hidden">
+      <div class="fg" style="margin-top:10px">
+        <label for="oai-base">Base URL</label>
+        <select id="oai-base-preset" onchange="onPresetChange()" style="margin-bottom:6px">
+          <option value="https://api.moonshot.cn/v1">Kimi（月之暗面）</option>
+          <option value="https://ark.cn-beijing.volces.com/api/v3">火山引擎（豆包）</option>
+          <option value="https://api.deepseek.com/v1">DeepSeek</option>
+          <option value="https://dashscope.aliyuncs.com/compatible-mode/v1">通义千问</option>
+          <option value="custom">自定义…</option>
+        </select>
+        <input type="text" id="oai-base" placeholder="https://api.moonshot.cn/v1" />
+      </div>
+      <div class="fg" style="margin-top:8px">
+        <label for="oai-model">模型名称</label>
+        <input type="text" id="oai-model" placeholder="如：moonshot-v1-32k" />
+      </div>
+      <div class="fg" style="margin-top:8px">
+        <label for="oai-key">API Key</label>
+        <div class="rel">
+          <input type="password" id="oai-key" placeholder="sk-…" />
+          <button class="eye-btn" onclick="toggleEye('oai-key')">👁</button>
+        </div>
+      </div>
+      <p style="font-size:.78rem;color:var(--muted);margin-top:6px">
+        常用模型：Kimi → <code>moonshot-v1-32k</code>，火山 → 在控制台复制 endpoint ID，DeepSeek → <code>deepseek-chat</code>
+      </p>
     </div>
     <div class="modal-actions">
       <button class="btn btn-primary" style="flex:1" onclick="saveKey()">保存并继续</button>
@@ -431,8 +464,8 @@ let outputResume = '', outputEval = '', outputProj = '';
 // Init
 // ─────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-  const k = ls('apikey');
-  if (!k) openKeyModal(false);
+  const hasKey = ls('apikey') || ls('oai_key');
+  if (!hasKey) openKeyModal(false);
   else setKeyStatus(true);
   loadSkillList();
   addEdu();
@@ -454,24 +487,88 @@ function ls(k, v) {
 // ─────────────────────────────────────────────
 function openKeyModal(canSkip) {
   document.getElementById('skip-btn').classList.toggle('hidden', !canSkip);
-  const k = ls('apikey');
-  if (k) document.getElementById('key-inp').value = k;
+  // Restore saved provider
+  const provider = ls('provider') || 'anthropic';
+  document.getElementById('provider-sel').value = provider;
+  onProviderChange();
+  if (provider === 'anthropic') {
+    const k = ls('apikey');
+    if (k) document.getElementById('key-inp').value = k;
+  } else {
+    const base = ls('oai_base');
+    const model = ls('oai_model');
+    const key = ls('oai_key');
+    if (base) {
+      // Check if base matches a preset
+      const presetOpts = document.getElementById('oai-base-preset').options;
+      let matched = false;
+      for (const opt of presetOpts) {
+        if (opt.value === base) { document.getElementById('oai-base-preset').value = base; matched = true; break; }
+      }
+      if (!matched) {
+        document.getElementById('oai-base-preset').value = 'custom';
+      }
+      document.getElementById('oai-base').value = base;
+    }
+    if (model) document.getElementById('oai-model').value = model;
+    if (key) document.getElementById('oai-key').value = key;
+  }
   document.getElementById('key-modal').classList.remove('hidden');
 }
 function closeKeyModal() { document.getElementById('key-modal').classList.add('hidden'); }
-function toggleEye() {
-  const i = document.getElementById('key-inp');
+function toggleEye(id) {
+  const i = document.getElementById(id);
   i.type = i.type === 'password' ? 'text' : 'password';
 }
+function onProviderChange() {
+  const v = document.getElementById('provider-sel').value;
+  document.getElementById('anthropic-fields').classList.toggle('hidden', v !== 'anthropic');
+  document.getElementById('openai-fields').classList.toggle('hidden', v !== 'openai');
+}
+function onPresetChange() {
+  const v = document.getElementById('oai-base-preset').value;
+  if (v !== 'custom') {
+    document.getElementById('oai-base').value = v;
+  }
+  // Set default model names per provider
+  const modelMap = {
+    'https://api.moonshot.cn/v1': 'moonshot-v1-32k',
+    'https://ark.cn-beijing.volces.com/api/v3': 'ep-XXXXXXXX',  // user must fill
+    'https://api.deepseek.com/v1': 'deepseek-chat',
+    'https://dashscope.aliyuncs.com/compatible-mode/v1': 'qwen-max'
+  };
+  if (modelMap[v]) document.getElementById('oai-model').value = modelMap[v];
+}
 function saveKey() {
-  const v = document.getElementById('key-inp').value.trim();
-  if (!v) { alert('请输入 API Key'); return; }
-  ls('apikey', v);
+  const provider = document.getElementById('provider-sel').value;
+  ls('provider', provider);
+  if (provider === 'anthropic') {
+    const v = document.getElementById('key-inp').value.trim();
+    if (!v) { alert('请输入 Anthropic API Key'); return; }
+    ls('apikey', v);
+  } else {
+    const base = document.getElementById('oai-base').value.trim();
+    const model = document.getElementById('oai-model').value.trim();
+    const key = document.getElementById('oai-key').value.trim();
+    if (!base) { alert('请输入 Base URL'); return; }
+    if (!model) { alert('请输入模型名称'); return; }
+    if (!key) { alert('请输入 API Key'); return; }
+    ls('oai_base', base);
+    ls('oai_model', model);
+    ls('oai_key', key);
+  }
   setKeyStatus(true);
   closeKeyModal();
 }
 function setKeyStatus(ok) {
-  document.getElementById('key-status').textContent = ok ? '✅ Key 已设置' : '⚠️ 未设置';
+  if (!ok) { document.getElementById('key-status').textContent = '⚠️ 未设置'; return; }
+  const provider = ls('provider') || 'anthropic';
+  const labels = {
+    anthropic: 'Claude',
+    openai: ls('oai_base') ? new URL(ls('oai_base')).hostname.split('.').slice(-2, -1)[0] : 'OAI'
+  };
+  const label = labels[provider] || provider;
+  document.getElementById('key-status').textContent = `✅ ${label} Key 已设置`;
 }
 
 // ─────────────────────────────────────────────
@@ -837,7 +934,8 @@ async function generate() {
     const names = unlinked.map(w => w.company).join('、');
     if (!confirm(`工作经历「${names}」尚未关联项目，建议先关联。是否继续？`)) return;
   }
-  const apiKey = ls('apikey');
+  const provider = ls('provider') || 'anthropic';
+  const apiKey = provider === 'anthropic' ? ls('apikey') : ls('oai_key');
   if (!apiKey) { openKeyModal(false); return; }
   if (!skillContent) { alert('Skill 尚未加载，请等待或刷新页面'); return; }
 
@@ -982,6 +1080,11 @@ function buildProjsText() {
 // Streaming API call
 // ─────────────────────────────────────────────
 async function streamCall(apiKey, system, userMsg, onChunk) {
+  const provider = ls('provider') || 'anthropic';
+  if (provider === 'openai') {
+    return streamCallOpenAI(apiKey, system, userMsg, onChunk);
+  }
+  // Anthropic
   const res = await fetch(API_URL, {
     method: 'POST',
     headers: {
@@ -1019,6 +1122,55 @@ async function streamCall(apiKey, system, userMsg, onChunk) {
         if (j.type === 'content_block_delta' && j.delta?.type === 'text_delta') onChunk(j.delta.text);
         if (j.type === 'message_start') inTok = j.message?.usage?.input_tokens || 0;
         if (j.type === 'message_delta') outTok = j.usage?.output_tokens || 0;
+      } catch {}
+    }
+  }
+  const ti = document.getElementById('token-info');
+  if (inTok || outTok)
+    ti.textContent = (ti.textContent ? ti.textContent + ' · ' : '') + `输入 ${inTok} / 输出 ${outTok} tokens`;
+}
+
+async function streamCallOpenAI(apiKey, system, userMsg, onChunk) {
+  const baseUrl = (ls('oai_base') || '').replace(/\/$/, '');
+  const model = ls('oai_model') || 'gpt-4o';
+  if (!baseUrl) throw new Error('请先设置 OpenAI Base URL');
+  const res = await fetch(`${baseUrl}/chat/completions`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`
+    },
+    body: JSON.stringify({
+      model,
+      max_tokens: 8000,
+      stream: true,
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: userMsg }
+      ]
+    })
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    const msg = err.error?.message || `HTTP ${res.status}`;
+    if (/401|auth/i.test(msg)) { toast('API Key 无效'); setTimeout(() => openKeyModal(true), 1200); }
+    throw new Error(msg);
+  }
+  const reader = res.body.getReader();
+  const dec = new TextDecoder();
+  let inTok = 0, outTok = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    for (const ln of dec.decode(value, { stream: true }).split('\n')) {
+      if (!ln.startsWith('data: ')) continue;
+      const raw = ln.slice(6).trim();
+      if (!raw || raw === '[DONE]') continue;
+      try {
+        const j = JSON.parse(raw);
+        const text = j.choices?.[0]?.delta?.content;
+        if (text) onChunk(text);
+        if (j.usage) { inTok = j.usage.prompt_tokens || 0; outTok = j.usage.completion_tokens || 0; }
       } catch {}
     }
   }
