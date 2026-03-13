@@ -1223,23 +1223,37 @@ function endGenerate() {
 // ─────────────────────────────────────────────
 async function downloadResumeWord() {
   if (!outputResume) { toast('请先生成简历'); return; }
-  await ensureDocx();
-  const name = v('name') || '简历';
-  const ym = new Date().toISOString().slice(0,7).replace('-','');
-  buildAndDownloadDocx(outputResume, `${name}_AI产品经理简历_${ym}.docx`);
+  try {
+    await ensureDocx();
+    const name = v('name') || '简历';
+    const ym = new Date().toISOString().slice(0,7).replace('-','');
+    buildAndDownloadDocx(outputResume, `${name}_AI产品经理简历_${ym}.docx`);
+  } catch(e) { toast(e.message || 'Word 下载失败'); }
 }
 async function downloadProjWord() {
   const text = [outputEval, outputProj].filter(Boolean).join('\n\n---\n\n');
   if (!text) { toast('请先生成项目评估'); return; }
-  await ensureDocx();
-  const name = v('name') || '项目';
-  const ym = new Date().toISOString().slice(0,7).replace('-','');
-  buildAndDownloadDocx(text, `${name}_增强版项目复盘_${ym}.docx`);
+  try {
+    await ensureDocx();
+    const name = v('name') || '项目';
+    const ym = new Date().toISOString().slice(0,7).replace('-','');
+    buildAndDownloadDocx(text, `${name}_增强版项目复盘_${ym}.docx`);
+  } catch(e) { toast(e.message || 'Word 下载失败'); }
 }
 
 async function ensureDocx() {
   if (window.docx) return;
-  await loadScript('https://unpkg.com/docx@8.5.0/build/index.js');
+  const cdnList = [
+    'https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.js',
+    'https://unpkg.com/docx@8.5.0/build/index.js',
+  ];
+  for (const cdn of cdnList) {
+    try {
+      await loadScript(cdn);
+      if (window.docx) return;
+    } catch(e) {}
+  }
+  throw new Error('Word 库加载失败，请检查网络后重试');
 }
 
 function buildAndDownloadDocx(markdown, filename) {
