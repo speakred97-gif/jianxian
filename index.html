@@ -1244,8 +1244,8 @@ async function downloadProjWord() {
 async function ensureDocx() {
   if (window.docx) return;
   const cdnList = [
-    'https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.js',
-    'https://unpkg.com/docx@8.5.0/build/index.js',
+    'https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js',
+    'https://unpkg.com/docx@8.5.0/build/index.umd.js',
   ];
   for (const cdn of cdnList) {
     try {
